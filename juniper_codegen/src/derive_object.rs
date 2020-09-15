@@ -50,7 +50,7 @@ pub fn build_derive_object(ast: syn::DeriveInput, error: GraphQLScope) -> syn::R
                 .name
                 .clone()
                 .map(SpanContainer::into_inner)
-                .unwrap_or_else(|| util::to_camel_case(&field_name.unraw().to_string()));
+                .unwrap_or_else(|| attrs.rename.apply(&field_name.unraw().to_string()));
 
             if name.starts_with("__") {
                 error.no_double_underscore(if let Some(name) = field_attrs.name {

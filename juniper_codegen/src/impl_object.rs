@@ -44,6 +44,8 @@ fn create(
         .map(SpanContainer::into_inner)
         .unwrap_or_else(|| _impl.type_ident.unraw().to_string());
 
+    let top_attrs = &_impl.attrs;
+
     let fields = _impl
         .methods
         .iter()
@@ -78,7 +80,7 @@ fn create(
                     let final_name = attrs
                         .argument(&arg_name)
                         .and_then(|attrs| attrs.rename.clone().map(|ident| ident.value()))
-                        .unwrap_or_else(|| util::to_camel_case(&arg_name));
+                        .unwrap_or_else(|| top_attrs.rename.apply(&arg_name));
 
                     let expect_text = format!(
                         "Internal error: missing argument {} - validation must have failed",
@@ -137,7 +139,7 @@ fn create(
                 .name
                 .clone()
                 .map(SpanContainer::into_inner)
-                .unwrap_or_else(|| util::to_camel_case(&ident.unraw().to_string()));
+                .unwrap_or_else(|| top_attrs.rename.apply(&ident.unraw().to_string()));
 
             if name.starts_with("__") {
                 error.no_double_underscore(if let Some(name) = attrs.name {

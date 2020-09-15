@@ -50,7 +50,7 @@ pub fn impl_input_object(ast: syn::DeriveInput, error: GraphQLScope) -> syn::Res
             let field_ident = field.ident.as_ref().unwrap();
             let name = match field_attrs.name {
                 Some(ref name) => name.to_string(),
-                None => crate::util::to_camel_case(&field_ident.unraw().to_string()),
+                None => attrs.rename.apply(&field_ident.unraw().to_string()),
             };
 
             if let Some(span) = field_attrs.skip {

@@ -276,7 +276,7 @@ impl InternalQuery {
 
     // Fields can be deprecated too.
     #[graphql(
-        deprecated = "deprecatin info...",
+        deprecated = "deprecating info...",
         // Note: just "deprecated," without a description works too.
     )]
     fn deprecated_field_simple() -> bool { true }
@@ -399,7 +399,7 @@ pub fn graphql_object(args: TokenStream, input: TokenStream) -> TokenStream {
 /// struct UserID(String);
 ///
 /// #[juniper::graphql_scalar(
-///     // You can rename the type for GraphQL by specifying the name here.    
+///     // You can rename the type for GraphQL by specifying the name here.
 ///     name = "MyName",
 ///     // You can also specify a description here.
 ///     // If present, doc comments will be ignored.

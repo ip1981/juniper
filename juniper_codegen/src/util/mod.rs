@@ -6,6 +6,7 @@ pub mod parse_impl;
 pub mod span_container;
 
 use std::ops::Deref as _;
+use std::str::FromStr;
 
 use proc_macro2::{Span, TokenStream};
 use proc_macro_error::abort;
@@ -296,6 +297,42 @@ pub fn is_valid_name(field_name: &str) -> bool {
     chars.all(|c| c.is_ascii_alphanumeric() || c == '_')
 }
 
+/// The different possible ways to change case of fields in a struct, or variants in an enum.
+#[derive(Copy, Clone, PartialEq, Debug)]
+pub enum RenameRule {
+    /// Don't apply a default rename rule.
+    None,
+    /// Rename direct children to "camelCase" style.
+    CamelCase,
+}
+
+impl Default for RenameRule {
+    fn default() -> Self {
+        Self::CamelCase
+    }
+}
+
+impl RenameRule {
+    pub fn apply(&self, field: &str) -> String {
+        match self {
+            Self::None => field.to_owned(),
+            Self::CamelCase => to_camel_case(field),
+        }
+    }
+}
+
+impl FromStr for RenameRule {
+    type Err = ();
+
+    fn from_str(rule: &str) -> Result<Self, Self::Err> {
+        match rule {
+            "none" => Ok(Self::None),
+            "camelCase" => Ok(Self::CamelCase),
+            _ => Err(()),
+        }
+    }
+}
+
 #[derive(Default, Debug)]
 pub struct ObjectAttributes {
     pub name: Option<SpanContainer<String>>,
@@ -305,6 +342,7 @@ pub struct ObjectAttributes {
     pub interfaces: Vec<SpanContainer<syn::Type>>,
     pub no_async: Option<SpanContainer<()>>,
     pub is_internal: bool,
+    pub rename: RenameRule,
 }
 
 impl syn::parse::Parse for ObjectAttributes {
@@ -369,6 +407,15 @@ impl syn::parse::Parse for ObjectAttributes {
                 }
                 "internal" => {
                     output.is_internal = true;
+                }
+                "rename" => {
+                    input.parse::<syn::Token![=]>()?;
+                    let val = input.parse::<syn::LitStr>()?;
+                    if let Ok(rename) = RenameRule::from_str(&val.value()) {
+                        output.rename = rename;
+                    } else {
+                        return Err(syn::Error::new(val.span(), "unknown rename rule"));
+                    }
                 }
                 _ => {
                     return Err(syn::Error::new(ident.span(), "unknown attribute"));
